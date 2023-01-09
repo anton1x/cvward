@@ -22,6 +22,8 @@ jobs:
         go-version: 1.19
         cache: true
         cache-dependency-path: subdir/go.sum
+
+    - name: Compile OpenCV
       run: make -C $GOPATH/pkg/gocv.io/x/gocv install
 
     - name: Build
