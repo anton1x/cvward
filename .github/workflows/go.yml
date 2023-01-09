@@ -20,6 +20,12 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.19
+        
+    - name: Debug
+      run: |
+        pwd
+        echo ${GOPATH}
+        echo ${GOROOT}
 
     - name: Compile OpenCV
       run: make -C ${GOPATH}/pkg/gocv.io/x/gocv install
