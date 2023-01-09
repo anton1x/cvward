@@ -29,6 +29,8 @@ jobs:
 
     - name: Compile OpenCV
       run: make -C ${GOPATH}/pkg/gocv.io/x/gocv install
+      env:
+        GOPATH: /home/runner/work/cvward
 
     - name: Build
       run: go build -v ./...
