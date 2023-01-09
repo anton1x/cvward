@@ -23,6 +23,8 @@ type GrabberConf struct {
 	UpdateEvery time.Duration
 }
 
+type UrlLoadingFunc func() (string, error)
+
 func NewGrabber(conf *GrabberConf, l *log.Logger) *Grabber {
 	return &Grabber{
 		conf:   conf,
@@ -38,7 +40,7 @@ func extractVideoLinks(playlistContent string) []string {
 	return res
 }
 
-func (g *Grabber) loadPlaylistContent() (string, error) {
+func (g *Grabber) LoadPlaylistContent() (string, error) {
 	resp, err := http.Get(g.conf.PlaylistURL)
 	defer resp.Body.Close()
 	if err != nil {
@@ -52,21 +54,28 @@ func (g *Grabber) loadPlaylistContent() (string, error) {
 	return string(res), err
 }
 
-func (g *Grabber) GrabURLS(ctx context.Context) UrlsChan {
+func (g *Grabber) GrabURLS(ctx context.Context, loadingFunc UrlLoadingFunc) UrlsChan {
 	ch := make(UrlsChan)
 	ticker := time.Tick(g.conf.UpdateEvery)
 	go func() {
 		defer close(ch)
 		for loop := true; loop; {
 			select {
+			case <-ctx.Done():
+				loop = false
 			case <-ticker:
-				content, err := g.loadPlaylistContent()
+				log.Println("Starting grab URLS")
+				content, err := loadingFunc()
 				if err != nil {
+					log.Println(err)
 					continue
 				}
 				links := extractVideoLinks(content)
 
-				if !reflect.DeepEqual(g.lastGrabbed, links) {
+				log.Printf("Extracted %d links", len(links))
+
+				if reflect.DeepEqual(g.lastGrabbed, links) {
+					log.Printf("Continue")
 					continue
 				}
 				g.lastGrabbed = links
@@ -74,8 +83,7 @@ func (g *Grabber) GrabURLS(ctx context.Context) UrlsChan {
 				for _, link := range links {
 					ch <- link
 				}
-			case <-ctx.Done():
-				loop = false
+
 			}
 
 		}
