@@ -20,6 +20,9 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.19
+        cache: true
+        cache-dependency-path: subdir/go.sum
+      - run: make -C $GOPATH/pkg/gocv.io/x/gocv install
 
     - name: Build
       run: go build -v ./...
