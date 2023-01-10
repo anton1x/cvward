@@ -26,6 +26,8 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
+	_ = tg.AddCommandHandler("help", "Список команд", telegram.HandleHelp)
+	_ = tg.AddCommandHandler("start", "Начать уведомлять вас о признаках движения", telegram.HandleSub)
 
 	err = tg.HandleSubscribers()
 
