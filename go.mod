@@ -7,4 +7,7 @@ require (
 	gocv.io/x/gocv v0.32.1
 )
 
-require github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+require (
+	github.com/juliangruber/go-intersect v1.1.0 // indirect
+	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+)
