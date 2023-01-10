@@ -2,6 +2,7 @@ package input
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -36,6 +37,10 @@ func mockLoadPlaylistContent() (string, error) {
 	return mockURL, nil
 }
 
+func mockLoadPlaylistContentWithErr() (string, error) {
+	return "", fmt.Errorf("test error")
+}
+
 func TestGrabber_GrabURLS(t *testing.T) {
 	conf := &GrabberConf{
 		PlaylistURL: "",
@@ -43,27 +48,44 @@ func TestGrabber_GrabURLS(t *testing.T) {
 	}
 	grabber := NewGrabber(conf, &log.Logger{})
 
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-
-	ch := grabber.GrabURLS(ctx, mockLoadPlaylistContent)
-
-	customCh := make(chan string)
-	defer close(customCh)
-	go func() {
-		customCh <- mockURL
-	}()
-
-	a, b := <-ch, <-customCh
-
-	if a != b {
-		t.Errorf("channels content not equal %v != %v", a, b)
+	tests := []struct {
+		name string
+		f    UrlLoadingFunc
+		want string
+	}{
+		{
+			name: "success load",
+			f:    mockLoadPlaylistContent,
+			want: mockURL,
+		},
+		{
+			name: "error on load",
+			f:    mockLoadPlaylistContentWithErr,
+			want: "block",
+		},
 	}
 
-	if grabber.lastGrabbed[len(grabber.lastGrabbed)-1] != mockURL {
-		t.Errorf("last grabbed not stored")
-	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, cancel := context.WithCancel(ctx)
+			ch := grabber.GrabURLS(ctx, test.f)
+			var a string
+			select {
+			case a = <-ch:
+			default:
+				a = "block"
+			}
 
-	cancel()
+			if a != test.want {
+				t.Errorf("channels content not equal %v != %v", a, test.want)
+			}
+			if len(grabber.lastGrabbed) > 0 && grabber.lastGrabbed[len(grabber.lastGrabbed)-1] != mockURL {
+				t.Errorf("last grabbed not stored")
+			}
+			cancel()
+		})
+
+	}
 
 }
