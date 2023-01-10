@@ -2,10 +2,10 @@ package input
 
 import (
 	"context"
+	"github.com/juliangruber/go-intersect"
 	"io"
 	"log"
 	"net/http"
-	"reflect"
 	"regexp"
 	"time"
 )
@@ -74,7 +74,7 @@ func (g *Grabber) GrabURLS(ctx context.Context, loadingFunc UrlLoadingFunc) Urls
 
 				log.Printf("Extracted %d links", len(links))
 
-				if reflect.DeepEqual(g.lastGrabbed, links) {
+				if len(g.lastGrabbed) > 0 && len(intersect.Simple(g.lastGrabbed, links)) > 0 {
 					log.Printf("Continue")
 					continue
 				}
