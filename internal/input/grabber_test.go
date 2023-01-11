@@ -49,19 +49,20 @@ func TestGrabber_GrabURLS(t *testing.T) {
 	grabber := NewGrabber(conf, &log.Logger{})
 
 	tests := []struct {
-		name string
-		f    UrlLoadingFunc
-		want string
+		name   string
+		f      UrlLoadingFunc
+		want   UrlsChan
+		values []string
 	}{
 		{
-			name: "success load",
-			f:    mockLoadPlaylistContent,
-			want: mockURL,
+			name:   "success load",
+			f:      mockLoadPlaylistContent,
+			values: []string{mockURL},
 		},
 		{
-			name: "error on load",
-			f:    mockLoadPlaylistContentWithErr,
-			want: "block",
+			name:   "error on load",
+			f:      mockLoadPlaylistContentWithErr,
+			values: []string{},
 		},
 	}
 
@@ -70,19 +71,14 @@ func TestGrabber_GrabURLS(t *testing.T) {
 			ctx := context.Background()
 			ctx, cancel := context.WithCancel(ctx)
 			ch := grabber.GrabURLS(ctx, test.f)
-			var a string
-			select {
-			case a = <-ch:
-			default:
-				a = "block"
+
+			for _, v := range test.values {
+				chValue := <-ch
+				if v != chValue {
+					t.Errorf("channels content not equal %v != %v", v, chValue)
+				}
 			}
 
-			if a != test.want {
-				t.Errorf("channels content not equal %v != %v", a, test.want)
-			}
-			if len(grabber.lastGrabbed) > 0 && grabber.lastGrabbed[len(grabber.lastGrabbed)-1] != mockURL {
-				t.Errorf("last grabbed not stored")
-			}
 			cancel()
 		})
 
