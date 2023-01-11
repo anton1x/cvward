@@ -1,6 +1,7 @@
 package input
 
 import (
+	"blob/internal/pkg/helper"
 	"context"
 	"github.com/juliangruber/go-intersect"
 	"io"
@@ -73,14 +74,14 @@ func (g *Grabber) GrabURLS(ctx context.Context, loadingFunc UrlLoadingFunc) Urls
 				links := extractVideoLinks(content)
 
 				log.Printf("Extracted %d links", len(links))
-
-				if len(g.lastGrabbed) > 0 && len(intersect.Simple(g.lastGrabbed, links)) > 0 {
+				newLinks := helper.SliceDiff(g.lastGrabbed, links)
+				if len(g.lastGrabbed) > 0 && len(newLinks) == 0 {
 					log.Printf("Continue")
 					continue
 				}
 				g.lastGrabbed = links
 
-				for _, link := range links {
+				for _, link := range newLinks {
 					ch <- link
 				}
 
