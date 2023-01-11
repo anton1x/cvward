@@ -3,7 +3,6 @@ package input
 import (
 	"blob/internal/pkg/helper"
 	"context"
-	"github.com/juliangruber/go-intersect"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +14,7 @@ type Grabber struct {
 	conf        *GrabberConf
 	logger      *log.Logger
 	lastGrabbed []string
+	ticker      *time.Ticker
 }
 
 type UrlsChan chan string
@@ -30,6 +30,7 @@ func NewGrabber(conf *GrabberConf, l *log.Logger) *Grabber {
 	return &Grabber{
 		conf:   conf,
 		logger: l,
+		ticker: time.NewTicker(conf.UpdateEvery),
 	}
 }
 
@@ -57,14 +58,14 @@ func (g *Grabber) LoadPlaylistContent() (string, error) {
 
 func (g *Grabber) GrabURLS(ctx context.Context, loadingFunc UrlLoadingFunc) UrlsChan {
 	ch := make(UrlsChan)
-	ticker := time.Tick(g.conf.UpdateEvery)
 	go func() {
 		defer close(ch)
+		defer g.ticker.Stop()
 		for loop := true; loop; {
 			select {
 			case <-ctx.Done():
 				loop = false
-			case <-ticker:
+			case <-g.ticker.C:
 				log.Println("Starting grab URLS")
 				content, err := loadingFunc()
 				if err != nil {
