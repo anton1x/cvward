@@ -20,10 +20,15 @@ type Telegram struct {
 	Api              *tgbotapi.BotAPI
 	VideoSubscribers map[tgbotapi.Chat]struct{}
 	handlers         map[string]*Handler
+	Config           *Config
 }
 
-func NewTelegram() (*Telegram, error) {
-	bot, err := tgbotapi.NewBotAPI("1762087955:AAHZtUQRWuXYS_XiLOZFCtZG-Y_u9oXbKuQ")
+type Config struct {
+	Token string `json:"token" yaml:"token"`
+}
+
+func NewTelegram(conf *Config) (*Telegram, error) {
+	bot, err := tgbotapi.NewBotAPI(conf.Token)
 	if err != nil {
 		return nil, err
 	}
