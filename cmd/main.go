@@ -1,6 +1,7 @@
 package main
 
 import (
+	"blob/internal/app"
 	"blob/internal/delivery/telegram"
 	"blob/internal/input"
 	"blob/internal/video_processor"
@@ -21,9 +22,15 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	cfg, err := app.LoadConfig("./configs")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	logging := log.New(os.Stdout, "", log.LstdFlags)
 
-	tg, err := telegram.NewTelegram()
+	tg, err := telegram.NewTelegram(&cfg.Telegram)
 	if err != nil {
 		log.Panicln(err)
 	}
