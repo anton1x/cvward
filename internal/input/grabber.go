@@ -44,8 +44,8 @@ func extractVideoLinks(playlistContent string) []string {
 
 func (g *Grabber) LoadPlaylistContent() (string, error) {
 	resp, err := http.Get(g.conf.PlaylistURL)
-	defer resp.Body.Close()
-	if err != nil {
+
+	if err != nil || resp == nil {
 		return "", err
 	}
 	res, err := io.ReadAll(resp.Body)
